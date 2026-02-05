@@ -1,6 +1,9 @@
 package collect
 
-import "time"
+import (
+	"context"
+	"time"
+)
 
 // Point represents a single data point with a name, value, timestamp, and tags.
 type Point struct {
@@ -13,5 +16,5 @@ type Point struct {
 // Collector is an interface for collecting metrics.
 type Collector interface {
 	Name() string
-	Collect() ([]Point, error)
+	Collect(ctx context.Context) ([]Point, error)
 }
