@@ -8,6 +8,7 @@ import (
 	"github.com/kanshi-dev/agent/internal/config"
 	"github.com/kanshi-dev/agent/internal/pipeline"
 	"github.com/kanshi-dev/agent/internal/registry"
+	"github.com/kanshi-dev/agent/internal/transport"
 )
 
 // Run
@@ -19,7 +20,8 @@ func Run(ctx context.Context, cfg config.Config) error {
 	)
 
 	collectors := registry.Enabled()
-	batch := pipeline.Batch{}
+	batch := &pipeline.Batch{}
+	sender := transport.LogSender{}
 
 	ticker := time.NewTicker(cfg.Interval)
 	flushTicker := time.NewTicker(cfg.FlushEvery)
@@ -30,14 +32,12 @@ func Run(ctx context.Context, cfg config.Config) error {
 		select {
 
 		case <-ctx.Done():
+			sendBatch(ctx, batch, sender)
 			log.Printf("kanshi-agent shutting down")
 			return nil
 
 		case <-flushTicker.C:
-			flushed := batch.Flush()
-			if len(flushed) > 0 {
-				log.Printf("flushed batch size = %d", len(flushed))
-			}
+			sendBatch(ctx, batch, sender)
 
 		case <-ticker.C:
 			for _, c := range collectors {
@@ -50,11 +50,22 @@ func Run(ctx context.Context, cfg config.Config) error {
 				// Add points to batch
 				batch.Add(points)
 
-				// Flush batch if it's full'
 				if batch.Len() >= cfg.BatchMax {
-					batch.Flush()
+					sendBatch(ctx, batch, sender)
 				}
 			}
 		}
+	}
+}
+
+func sendBatch(ctx context.Context, batch *pipeline.Batch, sender transport.Sender) {
+	payload := batch.Flush()
+
+	if len(payload) == 0 {
+		return
+	}
+
+	if err := sender.Send(ctx, payload); err != nil {
+		log.Printf("failed to send batch: %v", err)
 	}
 }
