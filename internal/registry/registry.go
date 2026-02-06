@@ -9,5 +9,6 @@ func Enabled() []collect.Collector {
 	return []collect.Collector{
 		system.CPUCollector{},
 		system.MemCollector{},
+		system.DiskCollector{},
 	}
 }

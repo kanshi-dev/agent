@@ -22,7 +22,7 @@ func (MemCollector) Collect(ctx context.Context) ([]collect.Point, error) {
 
 	return []collect.Point{
 		{
-			TimeStamp: time.Now(),
+			Timestamp: time.Now(),
 			Name:      "mem.used_percent",
 			Value:     memory.UsedPercent,
 			Tags:      nil,

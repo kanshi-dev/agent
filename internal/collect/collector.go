@@ -9,7 +9,7 @@ import (
 type Point struct {
 	Name      string
 	Value     float64
-	TimeStamp time.Time
+	Timestamp time.Time
 	Tags      []string
 }
 

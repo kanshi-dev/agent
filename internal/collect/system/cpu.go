@@ -28,7 +28,7 @@ func (CPUCollector) Collect(ctx context.Context) ([]collect.Point, error) {
 		{
 			Name:      "cpu.percennt",
 			Value:     pct[0],
-			TimeStamp: time.Now(),
+			Timestamp: time.Now(),
 			Tags:      nil,
 		},
 	}, nil
