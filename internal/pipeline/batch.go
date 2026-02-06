@@ -22,11 +22,3 @@ func (b *Batch) Flush() []collect.Point {
 	b.points = nil
 	return out
 }
-
-func (b *Batch) Snapshot() []collect.Point {
-	return b.points
-}
-
-func (b *Batch) Clear() {
-	b.points = nil
-}

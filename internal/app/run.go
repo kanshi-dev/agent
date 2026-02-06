@@ -67,5 +67,6 @@ func sendBatch(ctx context.Context, batch *pipeline.Batch, sender transport.Send
 
 	if err := sender.Send(ctx, payload); err != nil {
 		log.Printf("failed to send batch: %v", err)
+		return
 	}
 }
