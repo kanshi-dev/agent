@@ -9,6 +9,7 @@ import (
 	"github.com/kanshi-dev/agent/internal/pipeline"
 	"github.com/kanshi-dev/agent/internal/registry"
 	"github.com/kanshi-dev/agent/internal/transport"
+	"github.com/kanshi-dev/agent/internal/transport/grpc"
 )
 
 // Run
@@ -21,7 +22,9 @@ func Run(ctx context.Context, cfg config.Config) error {
 
 	collectors := registry.Enabled()
 	batch := &pipeline.Batch{}
-	sender := transport.LogSender{}
+	sender, err := grpc.NewGrpcSender(cfg.CoreAddr, "agent-1")
+	if err != nil {
+	}
 
 	ticker := time.NewTicker(cfg.Interval)
 	flushTicker := time.NewTicker(cfg.FlushEvery)
