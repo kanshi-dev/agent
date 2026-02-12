@@ -21,8 +21,9 @@ func Run(ctx context.Context, cfg config.Config) error {
 
 	collectors := registry.Enabled()
 	batch := &pipeline.Batch{}
-	sender, err := transport.NewLogSender(cfg.CoreAddr, "agent-1")
+	sender, err := transport.New(cfg.CoreAddr, "agent-1")
 	if err != nil {
+		return err
 	}
 
 	ticker := time.NewTicker(cfg.Interval)

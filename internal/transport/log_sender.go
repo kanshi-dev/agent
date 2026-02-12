@@ -14,7 +14,7 @@ type LogSender struct {
 	agentID string
 }
 
-func NewLogSender(coreAddr, agendID string) (*LogSender, error) {
+func New(coreAddr, agendID string) (*LogSender, error) {
 	conn, err := grpc.NewClient(coreAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 
 	if err != nil {
@@ -28,7 +28,8 @@ func NewLogSender(coreAddr, agendID string) (*LogSender, error) {
 }
 
 func (s *LogSender) Send(ctx context.Context, batch []collect.Point) error {
-	points := make([]*ingest.Point, len(batch))
+	points := make([]*ingest.Point, 0, len(batch))
+
 	for _, p := range batch {
 		points = append(points, &ingest.Point{
 			Name:              p.Name,
