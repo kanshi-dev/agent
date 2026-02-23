@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/kanshi-dev/agent/internal/config"
+	"github.com/kanshi-dev/agent/internal/identity"
 	"github.com/kanshi-dev/agent/internal/pipeline"
 	"github.com/kanshi-dev/agent/internal/registry"
 	"github.com/kanshi-dev/agent/internal/transport"
@@ -23,6 +24,16 @@ func Run(ctx context.Context, cfg config.Config) error {
 	batch := &pipeline.Batch{}
 	sender, err := transport.New(cfg.CoreAddr, "agent-1")
 	if err != nil {
+		return err
+	}
+
+	//Send agent info
+	info, err := identity.Collect("0.1.0")
+	if err != nil {
+		return err
+	}
+
+	if err := sender.ReportAgent(ctx, info); err != nil {
 		return err
 	}
 

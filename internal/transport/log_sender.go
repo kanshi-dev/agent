@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/kanshi-dev/agent/internal/collect"
+	"github.com/kanshi-dev/agent/internal/identity"
 	ingest "github.com/kanshi-dev/agent/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -44,5 +45,18 @@ func (s *LogSender) Send(ctx context.Context, batch []collect.Point) error {
 		Points:  points,
 	})
 
+	return err
+}
+
+func (s *LogSender) ReportAgent(ctx context.Context, info *identity.SystemInfo) error {
+	_, err := s.client.ReportAgent(ctx, &ingest.AgentReport{
+		AgentId:     s.agentID,
+		Hostname:    info.Hostname,
+		Os:          info.OS,
+		Arch:        info.Arch,
+		CpuCores:    info.CpuCores,
+		TotalMemory: info.TotalMemory,
+		Version:     info.Version,
+	})
 	return err
 }

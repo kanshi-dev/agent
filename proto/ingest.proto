@@ -2,13 +2,23 @@ syntax = "proto3";
 
 package kanshi.ingest.v1;
 
-option go_package = "github.com/kanshi-dev/kanshi/proto/ingest/v1;ingest";
+option go_package = "github.com/kanshi-dev/core/proto/ingest/v1;ingest";
 
 message Point {
   string name = 1;
   double value = 2;
   int64 timestamp_unix_nano = 3;
   repeated string tags = 4;
+}
+
+message AgentReport {
+  string agent_id = 1;
+  string hostname = 2;
+  string os = 3;
+  string arch = 4;
+  int32 cpu_cores = 5;
+  int64 total_memory = 6;
+  string version = 7;
 }
 
 message Batch {
@@ -22,4 +32,6 @@ message Ack {
 
 service IngestService {
   rpc IngestBatch(Batch) returns (Ack);
+  rpc ReportAgent (AgentReport) returns (Ack);
 }
+
