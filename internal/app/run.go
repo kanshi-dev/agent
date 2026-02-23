@@ -22,7 +22,14 @@ func Run(ctx context.Context, cfg config.Config) error {
 
 	collectors := registry.Enabled()
 	batch := &pipeline.Batch{}
-	sender, err := transport.New(cfg.CoreAddr, "agent-1")
+
+	//Generate agent ID
+	agentID, err := identity.LoadOrCreateAgentID()
+	if err != nil {
+		return err
+	}
+
+	sender, err := transport.New(cfg.CoreAddr, agentID)
 	if err != nil {
 		return err
 	}

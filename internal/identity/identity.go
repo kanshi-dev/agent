@@ -2,8 +2,10 @@ package identity
 
 import (
 	"os"
+	"path/filepath"
 	"runtime"
 
+	"github.com/google/uuid"
 	"github.com/shirou/gopsutil/v4/mem"
 )
 
@@ -35,4 +37,22 @@ func Collect(version string) (*SystemInfo, error) {
 		TotalMemory: int64(vm.Total),
 		Version:     version,
 	}, nil
+}
+
+func LoadOrCreateAgentID() (string, error) {
+	path := filepath.Join(".", ".kanshi-id")
+
+	// If exists, read it
+	if data, err := os.ReadFile(path); err == nil {
+		return string(data), nil
+	}
+
+	// Otherwise generate new one
+	id := uuid.NewString()
+
+	if err := os.WriteFile(path, []byte(id), 0644); err != nil {
+		return "", err
+	}
+
+	return id, nil
 }
