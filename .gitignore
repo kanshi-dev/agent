@@ -34,3 +34,7 @@ Thumbs.db
 *.prof
 *.pprof
 debug
+
+.kanshi-id
+
+/kanshi-binary
