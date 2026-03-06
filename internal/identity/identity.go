@@ -6,6 +6,7 @@ import (
 	"runtime"
 
 	"github.com/google/uuid"
+	"github.com/shirou/gopsutil/v4/disk"
 	"github.com/shirou/gopsutil/v4/mem"
 )
 
@@ -16,6 +17,7 @@ type SystemInfo struct {
 	CpuCores    int32
 	TotalMemory int64
 	Version     string
+	DiskSize    int64
 }
 
 func Collect(version string) (*SystemInfo, error) {
@@ -25,6 +27,7 @@ func Collect(version string) (*SystemInfo, error) {
 	}
 
 	vm, err := mem.VirtualMemory()
+	diskTotal, err := disk.Usage("/")
 	if err != nil {
 		return nil, err
 	}
@@ -36,6 +39,7 @@ func Collect(version string) (*SystemInfo, error) {
 		CpuCores:    int32(runtime.NumCPU()),
 		TotalMemory: int64(vm.Total),
 		Version:     version,
+		DiskSize:    int64(diskTotal.Total),
 	}, nil
 }
 

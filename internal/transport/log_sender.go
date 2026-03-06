@@ -57,6 +57,7 @@ func (s *LogSender) ReportAgent(ctx context.Context, info *identity.SystemInfo) 
 		CpuCores:    info.CpuCores,
 		TotalMemory: info.TotalMemory,
 		Version:     info.Version,
+		DiskSize:    info.DiskSize,
 	})
 	return err
 }
