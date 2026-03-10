@@ -11,9 +11,9 @@ import (
 )
 
 func main() {
-	cfg := config.DefaultConfig()
 
-	//config.LoadFromEnv(&cfg)
+	cfg := config.DefaultConfig()
+	config.LoadFromEnv(&cfg)
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()

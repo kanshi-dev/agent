@@ -8,13 +8,33 @@ import (
 )
 
 func LoadFromEnv(c *Config) {
-	c.CoreAddr = os.Getenv("KANSHI_CORE_ADDR")
-	c.APIKey = os.Getenv("KANSHI_API_KEY")
-	d, _ := time.ParseDuration(os.Getenv("KANSHI_INTERVAL"))
-	c.Interval = d
-	n, _ := strconv.Atoi(os.Getenv("KANSHI_BATCH_MAX"))
-	c.BatchMax = n
-	f, _ := time.ParseDuration(os.Getenv("KANSHI_FLUSH_EVERY"))
-	c.FlushEvery = f
-	c.HostTags = strings.Split(os.Getenv("KANSHI_HOST_TAGS"), ",")
+	if v := os.Getenv("KANSHI_CORE_ADDR"); v != "" {
+		c.CoreAddr = v
+	}
+
+	if v := os.Getenv("KANSHI_API_KEY"); v != "" {
+		c.APIKey = v
+	}
+
+	if v := os.Getenv("KANSHI_INTERVAL"); v != "" {
+		if d, err := time.ParseDuration(v); err == nil {
+			c.Interval = d
+		}
+	}
+
+	if v := os.Getenv("KANSHI_BATCH_MAX"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			c.BatchMax = n
+		}
+	}
+
+	if v := os.Getenv("KANSHI_FLUSH_EVERY"); v != "" {
+		if d, err := time.ParseDuration(v); err == nil {
+			c.FlushEvery = d
+		}
+	}
+
+	if v := os.Getenv("KANSHI_HOST_TAGS"); v != "" {
+		c.HostTags = strings.Split(v, ",")
+	}
 }
