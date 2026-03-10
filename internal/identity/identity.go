@@ -7,12 +7,14 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/shirou/gopsutil/v4/disk"
+	"github.com/shirou/gopsutil/v4/host"
 	"github.com/shirou/gopsutil/v4/mem"
 )
 
 type SystemInfo struct {
 	Hostname    string
 	OS          string
+	Platform    string
 	Arch        string
 	CpuCores    int32
 	TotalMemory int64
@@ -21,25 +23,30 @@ type SystemInfo struct {
 }
 
 func Collect(version string) (*SystemInfo, error) {
-	host, err := os.Hostname()
+	info, err := host.Info()
 	if err != nil {
 		return nil, err
 	}
 
 	vm, err := mem.VirtualMemory()
-	diskTotal, err := disk.Usage("/")
+	if err != nil {
+		return nil, err
+	}
+
+	diskUsage, err := disk.Usage("/")
 	if err != nil {
 		return nil, err
 	}
 
 	return &SystemInfo{
-		Hostname:    host,
-		OS:          runtime.GOOS,
-		Arch:        runtime.GOARCH,
+		Hostname:    info.Hostname,
+		OS:          info.OS,
+		Platform:    info.Platform,
+		Arch:        info.KernelArch,
 		CpuCores:    int32(runtime.NumCPU()),
 		TotalMemory: int64(vm.Total),
 		Version:     version,
-		DiskSize:    int64(diskTotal.Total),
+		DiskSize:    int64(diskUsage.Total),
 	}, nil
 }
 
