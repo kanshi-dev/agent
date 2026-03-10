@@ -53,6 +53,7 @@ func (s *LogSender) ReportAgent(ctx context.Context, info *identity.SystemInfo) 
 		AgentId:     s.agentID,
 		Hostname:    info.Hostname,
 		Os:          info.OS,
+		Platform:    info.Platform,
 		Arch:        info.Arch,
 		CpuCores:    info.CpuCores,
 		TotalMemory: info.TotalMemory,

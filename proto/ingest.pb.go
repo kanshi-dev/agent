@@ -320,7 +320,7 @@ const file_proto_ingest_proto_rawDesc = "" +
 	"\baccepted\x18\x01 \x01(\x03R\baccepted2\x93\x01\n" +
 	"\rIngestService\x12=\n" +
 	"\vIngestBatch\x12\x17.kanshi.ingest.v1.Batch\x1a\x15.kanshi.ingest.v1.Ack\x12C\n" +
-	"\vReportAgent\x12\x1d.kanshi.ingest.v1.AgentReport\x1a\x15.kanshi.ingest.v1.AckB3Z1github.com/kanshi-dev/core/proto/ingest/v1;ingestb\x06proto3"
+	"\vReportAgent\x12\x1d.kanshi.ingest.v1.AgentReport\x1a\x15.kanshi.ingest.v1.AckB4Z2github.com/kanshi-dev/agent/proto/ingest/v1;ingestb\x06proto3"
 
 var (
 	file_proto_ingest_proto_rawDescOnce sync.Once

@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package kanshi.ingest.v1;
 
-option go_package = "github.com/kanshi-dev/core/proto/ingest/v1;ingest";
+option go_package = "github.com/kanshi-dev/agent/proto/ingest/v1;ingest";
 
 message Point {
   string name = 1;
