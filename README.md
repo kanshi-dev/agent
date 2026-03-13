@@ -1,10 +1,8 @@
 # Kanshi Agent
 
-Kanshi Agent is a small system monitoring agent written in Go.
+This repository contains the **Kanshi Agent**, a small system monitoring agent written in Go.
 
-It collects basic system metrics (CPU, memory, disk, network), batches them, and sends them to a core service over gRPC.
-
-This is a learning / pet project focused on building a clean monitoring pipeline from scratch.
+The agent's primary role is to collect system metrics and ship them to the [Kanshi Core](https://github.com/kanshi-dev/core) service, which handles storage, indexing, and visualization.
 
 ---
 
@@ -35,20 +33,27 @@ go run cmd/agent/main.go
 ```
 
 ## Configure via environment variables:
+| Variable | Default | Description |
+|---|---|---|
+| `KANSHI_CORE_ADDR` | `127.0.0.1:50051` | The gRPC address of the Kanshi core service. |
+| `KANSHI_API_KEY` | (empty) | API key for authentication with the core service. |
+| `KANSHI_INTERVAL` | `5s` | How often the agent collects system metrics. |
+| `KANSHI_BATCH_MAX` | `100` | Maximum number of points to batch before flushing. |
+| `KANSHI_FLUSH_EVERY` | `10s` | Maximum time to wait before flushing regardless of batch size. |
+| `KANSHI_HOST_TAGS` | (empty) | Comma-separated tags for the host (e.g. `env:prod,region:us-west`). |
 
-```yaml
-CORE_ADDR=localhost:50051
-INTERVAL=5s
-BATCH_MAX=100
-FLUSH_EVERY=10s
-
+```bash
+# Example
+export KANSHI_CORE_ADDR=localhost:50051
+export KANSHI_INTERVAL=5s
+go run cmd/agent/main.go
 ```
 
 
 ### Why This Exists?
 
-	-	To understand how monitoring agents work internally
-	-	To practice Go project structure
-	-	To build toward a larger system (Kanshi Core)
+- To understand how monitoring agents work internally
+- To practice Go project structure
+- To build toward a larger system ([Kanshi Core](https://github.com/kanshi-dev/core))
 
 Future versions may add retries, streaming, and reliability features — but v1 stays intentionally simple.
