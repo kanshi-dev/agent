@@ -11,6 +11,7 @@ import (
 	"github.com/shirou/gopsutil/v4/mem"
 )
 
+// SystemInfo contains metadata about the host system.
 type SystemInfo struct {
 	Hostname    string
 	OS          string
@@ -22,6 +23,7 @@ type SystemInfo struct {
 	DiskSize    int64
 }
 
+// Collect gathers system information using gopsutil and runtime.
 func Collect(version string) (*SystemInfo, error) {
 	info, err := host.Info()
 	if err != nil {
@@ -50,6 +52,8 @@ func Collect(version string) (*SystemInfo, error) {
 	}, nil
 }
 
+// LoadOrCreateAgentID attempts to read the agent ID from .kanshi-id file.
+// If it doesn't exist, it generates a new UUID and saves it to the file.
 func LoadOrCreateAgentID() (string, error) {
 	path := filepath.Join(".", ".kanshi-id")
 

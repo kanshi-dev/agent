@@ -8,6 +8,7 @@ import (
 	"github.com/shirou/gopsutil/v4/mem"
 )
 
+// MemCollector gathers memory utilization metrics.
 type MemCollector struct{}
 
 func (MemCollector) Name() string {

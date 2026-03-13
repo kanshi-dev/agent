@@ -8,6 +8,7 @@ import (
 	"github.com/shirou/gopsutil/v4/cpu"
 )
 
+// CPUCollector gathers CPU utilization metrics.
 type CPUCollector struct{}
 
 func (CPUCollector) Name() string {

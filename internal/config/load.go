@@ -7,6 +7,7 @@ import (
 	"time"
 )
 
+// LoadFromEnv populates the Config from environment variables, using KANSHI_ prefix.
 func LoadFromEnv(c *Config) {
 	if v := os.Getenv("KANSHI_CORE_ADDR"); v != "" {
 		c.CoreAddr = v

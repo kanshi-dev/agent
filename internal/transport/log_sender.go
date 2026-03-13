@@ -10,11 +10,13 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+// LogSender implements the Sender interface using gRPC.
 type LogSender struct {
 	client  ingest.IngestServiceClient
 	agentID string
 }
 
+// New creates a new gRPC-based Sender.
 func New(coreAddr, agendID string) (*LogSender, error) {
 	conn, err := grpc.NewClient(coreAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 
@@ -28,6 +30,7 @@ func New(coreAddr, agendID string) (*LogSender, error) {
 	}, nil
 }
 
+// Send transmits a batch of collected points to the core service.
 func (s *LogSender) Send(ctx context.Context, batch []collect.Point) error {
 	points := make([]*ingest.Point, 0, len(batch))
 
@@ -48,6 +51,7 @@ func (s *LogSender) Send(ctx context.Context, batch []collect.Point) error {
 	return err
 }
 
+// ReportAgent sends system information to the core service.
 func (s *LogSender) ReportAgent(ctx context.Context, info *identity.SystemInfo) error {
 	_, err := s.client.ReportAgent(ctx, &ingest.AgentReport{
 		AgentId:     s.agentID,

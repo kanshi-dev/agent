@@ -8,6 +8,7 @@ import (
 	"github.com/shirou/gopsutil/v4/disk"
 )
 
+// DiskCollector gathers disk usage metrics.
 type DiskCollector struct{}
 
 func (DiskCollector) Name() string {

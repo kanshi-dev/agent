@@ -2,6 +2,7 @@ package pipeline
 
 import "github.com/kanshi-dev/agent/internal/collect"
 
+// Batch provides an in-memory buffer for collected metric points.
 type Batch struct {
 	points []collect.Point
 }
@@ -16,7 +17,7 @@ func (b *Batch) Len() int {
 	return len(b.points)
 }
 
-// Flush returns the points in the batch and clears it.
+// Flush returns and clears all points currently in the batch.
 func (b *Batch) Flush() []collect.Point {
 	out := b.points
 	b.points = nil

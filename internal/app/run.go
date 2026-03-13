@@ -12,9 +12,8 @@ import (
 	"github.com/kanshi-dev/agent/internal/transport"
 )
 
-// Run
-// This runs the agent with predefined configuration.
-// /*
+// Run starts the agent's main collection and transmission loop.
+// It initializes collectors, creates a transport, and manages the collection intervals.
 func Run(ctx context.Context, cfg config.Config) error {
 	log.Printf("kanshi-agent starting: core=%s interval=%s batchMax=%d flushEvery=%s tags=%d",
 		cfg.CoreAddr, cfg.Interval, cfg.BatchMax, cfg.FlushEvery, len(cfg.HostTags),
