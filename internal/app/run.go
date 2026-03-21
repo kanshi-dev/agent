@@ -28,9 +28,22 @@ func Run(ctx context.Context, cfg config.Config) error {
 		return err
 	}
 
-	sender, err := transport.New(cfg.CoreAddr, agentID)
-	if err != nil {
-		return err
+	var sender transport.Sender
+	for {
+		sender, err = transport.New(cfg.CoreAddr, agentID)
+		if err == nil {
+			// gRPC NewClient is lazy, so we still need to check if we can reach it
+			// or just proceed and let ReportAgent fail and trigger retry.
+			// Let's proceed to ReportAgent.
+			break
+		}
+
+		log.Printf("failed to connect to core %s: %v. Retrying in 5s...", cfg.CoreAddr, err)
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(5 * time.Second):
+		}
 	}
 
 	//Send agent info
@@ -39,8 +52,17 @@ func Run(ctx context.Context, cfg config.Config) error {
 		return err
 	}
 
-	if err := sender.ReportAgent(ctx, info); err != nil {
-		return err
+	for {
+		if err := sender.ReportAgent(ctx, info); err != nil {
+			log.Printf("failed to report agent: %v. Retrying in 5s...", err)
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			case <-time.After(5 * time.Second):
+				continue
+			}
+		}
+		break
 	}
 
 	ticker := time.NewTicker(cfg.Interval)
