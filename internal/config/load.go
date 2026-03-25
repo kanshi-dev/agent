@@ -17,6 +17,10 @@ func LoadFromEnv(c *Config) {
 		c.APIKey = v
 	}
 
+	if v := os.Getenv("KANSHI_LOG_LEVEL"); v != "" {
+		c.LogLevel = strings.ToLower(v)
+	}
+
 	if v := os.Getenv("KANSHI_INTERVAL"); v != "" {
 		if d, err := time.ParseDuration(v); err == nil {
 			c.Interval = d
@@ -38,4 +42,5 @@ func LoadFromEnv(c *Config) {
 	if v := os.Getenv("KANSHI_HOST_TAGS"); v != "" {
 		c.HostTags = strings.Split(v, ",")
 	}
+
 }

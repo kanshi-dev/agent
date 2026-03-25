@@ -8,6 +8,8 @@ type Config struct {
 	CoreAddr string
 	// APIKey is used for authentication with the core service (currently unused).
 	APIKey string
+	// LogLevel is the logging level (e.g., "info", "debug").
+	LogLevel string
 	// Interval defines how often the agent collects system metrics.
 	Interval time.Duration
 	// BatchMax is the maximum number of points to batch before flushing.
@@ -23,6 +25,7 @@ func DefaultConfig() Config {
 	return Config{
 		CoreAddr:   "127.0.0.1:50051",
 		APIKey:     "",
+		LogLevel:   "info",
 		Interval:   5 * time.Second,
 		BatchMax:   100,
 		FlushEvery: 10 * time.Second,

@@ -22,7 +22,7 @@ func (l *StdLogger) Debug(msg string, args ...any) {
 	l.logf(DEBUG, "DEBUG", msg, args...)
 }
 
-func (l *StdLogger) Log(msg string, args ...any) {
+func (l *StdLogger) Info(msg string, args ...any) {
 	l.logf(INFO, "INFO", msg, args...)
 }
 

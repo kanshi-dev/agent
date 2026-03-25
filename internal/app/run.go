@@ -2,19 +2,22 @@ package app
 
 import (
 	"context"
-	"log"
 	"math/rand"
 	"time"
 
 	"github.com/kanshi-dev/agent/internal/config"
 	"github.com/kanshi-dev/agent/internal/identity"
+	"github.com/kanshi-dev/agent/internal/logger"
 	"github.com/kanshi-dev/agent/internal/pipeline"
 	"github.com/kanshi-dev/agent/internal/registry"
 	"github.com/kanshi-dev/agent/internal/transport"
 )
 
 func Run(ctx context.Context, cfg config.Config) error {
-	log.Printf("kanshi-agent starting: core=%s interval=%s batchMax=%d flushEvery=%s tags=%d",
+	lvl := logger.ParseLevel(cfg.LogLevel)
+	logg := logger.New(lvl)
+
+	logg.Info("kanshi-agent starting: core=%s interval=%s batchMax=%d flushEvery=%s tags=%d",
 		cfg.CoreAddr, cfg.Interval, cfg.BatchMax, cfg.FlushEvery, len(cfg.HostTags),
 	)
 
@@ -45,9 +48,9 @@ func Run(ctx context.Context, cfg config.Config) error {
 				break
 			}
 
-			log.Printf("report failed: %v", err)
+			logg.Error("report failed: %v", err)
 		} else {
-			log.Printf("connect failed: %v", err)
+			logg.Error("connect failed: %v", err)
 		}
 
 		sleepWithJitter(5 * time.Second)
@@ -68,25 +71,25 @@ func Run(ctx context.Context, cfg config.Config) error {
 		select {
 
 		case <-ctx.Done():
-			sendBatch(ctx, batch, &sender, cfg, agentID)
-			log.Printf("kanshi-agent shutting down")
+			sendBatch(ctx, batch, &sender, cfg, agentID, logg)
+			logg.Info("kanshi-agent shutting down")
 			return nil
 
 		case <-flushTicker.C:
-			sendBatch(ctx, batch, &sender, cfg, agentID)
+			sendBatch(ctx, batch, &sender, cfg, agentID, logg)
 
 		case <-ticker.C:
 			for _, c := range collectors {
 				points, err := c.Collect(ctx)
 				if err != nil {
-					log.Printf("failed to collect %s: %v", c.Name(), err)
+					logg.Error("failed to collect %s: %v", c.Name(), err)
 					continue
 				}
 
 				batch.Add(points)
 
 				if batch.Len() >= cfg.BatchMax {
-					sendBatch(ctx, batch, &sender, cfg, agentID)
+					sendBatch(ctx, batch, &sender, cfg, agentID, logg)
 				}
 			}
 		}
@@ -99,6 +102,7 @@ func sendBatch(
 	sender *transport.Sender,
 	cfg config.Config,
 	agentID string,
+	logg *logger.StdLogger,
 ) {
 	payload := batch.Flush()
 
@@ -115,7 +119,7 @@ func sendBatch(
 			return
 		}
 
-		log.Printf("send failed: %v", err)
+		logg.Error("send failed: %v", err)
 
 		for {
 			newSender, err := transport.New(cfg.CoreAddr, agentID)
@@ -124,7 +128,7 @@ func sendBatch(
 				break
 			}
 
-			log.Printf("reconnect failed: %v", err)
+			logg.Error("reconnect failed: %v", err)
 			sleepWithJitter(5 * time.Second)
 		}
 
