@@ -7,8 +7,10 @@ import (
 	"github.com/kanshi-dev/agent/internal/identity"
 	ingest "github.com/kanshi-dev/agent/proto"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 )
 
 // LogSender implements the Sender interface using gRPC.
@@ -39,6 +41,16 @@ func (s *LogSender) withAuth(ctx context.Context) context.Context {
 	}
 
 	return metadata.AppendToOutgoingContext(ctx, "x-api-key", s.apiKey)
+}
+
+// IsAuthError returns true when an error represents an authentication/authorization failure.
+func IsAuthError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	st := status.Code(err)
+	return st == codes.Unauthenticated || st == codes.PermissionDenied
 }
 
 // Send transmits a batch of collected points to the core service.

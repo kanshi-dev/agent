@@ -48,7 +48,11 @@ func Run(ctx context.Context, cfg config.Config) error {
 				break
 			}
 
-			logg.Error("report failed: %v", err)
+			if transport.IsAuthError(err) {
+				logg.Error("authentication failed while reporting agent (check KANSHI_API_KEY): %v", err)
+			} else {
+				logg.Error("report failed: %v", err)
+			}
 		} else {
 			logg.Error("connect failed: %v", err)
 		}
@@ -119,6 +123,12 @@ func sendBatch(
 			return
 		}
 
+		if transport.IsAuthError(err) {
+			logg.Error("authentication failed while sending batch (check KANSHI_API_KEY): %v", err)
+			sleepWithJitter(10 * time.Second)
+			continue
+		}
+
 		logg.Error("send failed: %v", err)
 
 		for {
@@ -132,7 +142,7 @@ func sendBatch(
 			sleepWithJitter(5 * time.Second)
 		}
 
-		// retry same payload (NO DATA LOSS)
+		// retry the same payload (NO DATA LOSS)
 		sleepWithJitter(2 * time.Second)
 	}
 }
