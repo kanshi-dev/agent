@@ -38,7 +38,7 @@ func Run(ctx context.Context, cfg config.Config) error {
 	}
 
 	for {
-		sender, err = transport.New(cfg.CoreAddr, agentID)
+		sender, err = transport.New(cfg.CoreAddr, agentID, cfg.APIKey)
 		if err == nil {
 			ctxTimeout, cancel := context.WithTimeout(ctx, 5*time.Second)
 			err = sender.ReportAgent(ctxTimeout, info)
@@ -122,7 +122,7 @@ func sendBatch(
 		logg.Error("send failed: %v", err)
 
 		for {
-			newSender, err := transport.New(cfg.CoreAddr, agentID)
+			newSender, err := transport.New(cfg.CoreAddr, agentID, cfg.APIKey)
 			if err == nil {
 				*sender = newSender
 				break

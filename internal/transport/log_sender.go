@@ -8,16 +8,18 @@ import (
 	ingest "github.com/kanshi-dev/agent/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 )
 
 // LogSender implements the Sender interface using gRPC.
 type LogSender struct {
 	client  ingest.IngestServiceClient
 	agentID string
+	apiKey  string
 }
 
 // New creates a new gRPC-based Sender.
-func New(coreAddr, agendID string) (*LogSender, error) {
+func New(coreAddr, agendID, apiKey string) (*LogSender, error) {
 	conn, err := grpc.NewClient(coreAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 
 	if err != nil {
@@ -27,7 +29,16 @@ func New(coreAddr, agendID string) (*LogSender, error) {
 	return &LogSender{
 		client:  ingest.NewIngestServiceClient(conn),
 		agentID: agendID,
+		apiKey:  apiKey,
 	}, nil
+}
+
+func (s *LogSender) withAuth(ctx context.Context) context.Context {
+	if s.apiKey == "" {
+		return ctx
+	}
+
+	return metadata.AppendToOutgoingContext(ctx, "x-api-key", s.apiKey)
 }
 
 // Send transmits a batch of collected points to the core service.
@@ -43,7 +54,7 @@ func (s *LogSender) Send(ctx context.Context, batch []collect.Point) error {
 		})
 	}
 
-	_, err := s.client.IngestBatch(ctx, &ingest.Batch{
+	_, err := s.client.IngestBatch(s.withAuth(ctx), &ingest.Batch{
 		AgentId: s.agentID,
 		Points:  points,
 	})
@@ -53,7 +64,7 @@ func (s *LogSender) Send(ctx context.Context, batch []collect.Point) error {
 
 // ReportAgent sends system information to the core service.
 func (s *LogSender) ReportAgent(ctx context.Context, info *identity.SystemInfo) error {
-	_, err := s.client.ReportAgent(ctx, &ingest.AgentReport{
+	_, err := s.client.ReportAgent(s.withAuth(ctx), &ingest.AgentReport{
 		AgentId:     s.agentID,
 		Hostname:    info.Hostname,
 		Os:          info.OS,

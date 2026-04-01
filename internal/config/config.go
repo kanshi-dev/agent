@@ -6,7 +6,7 @@ import "time"
 type Config struct {
 	// CoreAddr is the gRPC address of the Kanshi core service (e.g., "127.0.0.1:50051").
 	CoreAddr string
-	// APIKey is used for authentication with the core service (currently unused).
+	// APIKey is used for authentication with the core service.
 	APIKey string
 	// LogLevel is the logging level (e.g., "info", "debug").
 	LogLevel string
