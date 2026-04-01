@@ -22,8 +22,6 @@ Under the hood, it’s essentially a thin wrapper around the excellent [`gopsuti
 
 collect → batch → send
 
-No retries, no streaming, no disk buffering — just a minimal working agent.
-
 ---
 
 ## Run
