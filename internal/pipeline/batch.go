@@ -3,9 +3,12 @@ package pipeline
 import "github.com/kanshi-dev/agent/internal/collect"
 
 // Batch provides an in-memory buffer for collected metric points with a maximum size.
+// When the buffer is full, the oldest points are dropped to make room for newer ones.
 type Batch struct {
 	points []collect.Point
 	max    int
+	// dropped is the number of points that have been dropped due to size limits.
+	dropped int64
 }
 
 // NewBatch creates a new Batch with the specified maximum size.
@@ -21,21 +24,26 @@ func NewBatch(max int) *Batch {
 }
 
 // Add adds points to the batch, ensuring the batch does not exceed its maximum size.
-// If adding the points would exceed the maximum, excess points are dropped.
-func (b *Batch) Add(points []collect.Point) {
-	if len(b.points) >= b.max {
-		// Batch is already at or over capacity, drop all new points
-		return
+// If adding the points would exceed the maximum, the oldest points are dropped first
+// to keep the newest points.
+// It returns the number of points dropped.
+func (b *Batch) Add(points []collect.Point) int {
+	if b.max == 0 {
+		b.dropped += int64(len(points))
+		return len(points)
 	}
-
-	available := b.max - len(b.points)
-	if len(points) > available {
-		// Not enough space for all points, take only what fits
-		b.points = append(b.points, points[:available]...)
-	} else {
-		// Enough space for all points
-		b.points = append(b.points, points...)
+	if len(points) == 0 {
+		return 0
 	}
+	combined := append(b.points, points...)
+	if len(combined) > b.max {
+		dropped := len(combined) - b.max
+		b.dropped += int64(dropped)
+		b.points = combined[len(combined)-b.max:]
+		return dropped
+	}
+	b.points = combined
+	return 0
 }
 
 // Len returns the number of points in the batch.
@@ -45,7 +53,20 @@ func (b *Batch) Len() int {
 
 // Flush returns and clears all points currently in the batch.
 func (b *Batch) Flush() []collect.Point {
-	out := b.points
+	points := b.points
 	b.points = nil
-	return out
+	return points
+}
+
+// Dropped returns the number of points that have been dropped due to size limits
+// since the batch was created or since the last call to DroppedReset.
+func (b *Batch) Dropped() int64 {
+	return b.dropped
+}
+
+// DroppedReset returns the number of points dropped since the last call and resets the counter.
+func (b *Batch) DroppedReset() int64 {
+	d := b.dropped
+	b.dropped = 0
+	return d
 }

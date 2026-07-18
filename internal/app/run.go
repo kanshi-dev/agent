@@ -108,6 +108,10 @@ func sendBatch(
 	agentID string,
 	logg *logger.StdLogger,
 ) {
+	// Log any dropped points due to batch size limit
+	if dropped := batch.DroppedReset(); dropped > 0 {
+		logg.Info("Dropped %d metric points due to batch size limit", dropped)
+	}
 	payload := batch.Flush()
 
 	if len(payload) == 0 {
