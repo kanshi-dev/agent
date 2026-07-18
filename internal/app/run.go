@@ -22,7 +22,7 @@ func Run(ctx context.Context, cfg config.Config) error {
 	)
 
 	collectors := registry.Enabled()
-	batch := &pipeline.Batch{}
+	batch := pipeline.NewBatch(cfg.BatchMax)
 
 	//Generate agent ID
 	agentID, err := identity.LoadOrCreateAgentID()
