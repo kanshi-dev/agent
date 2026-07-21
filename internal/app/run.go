@@ -58,7 +58,8 @@ func Run(ctx context.Context, cfg config.Config) error {
 		}
 
 		if !sleepWithJitter(ctx, 5*time.Second) {
-			return ctx.Err()
+			logg.Info("kanshi-agent shutting down")
+			return nil
 		}
 	}
 
