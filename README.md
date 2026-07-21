@@ -1,5 +1,7 @@
 # Kanshi Agent
 
+[![CI](https://github.com/kanshi-dev/agent/actions/workflows/ci.yaml/badge.svg)](https://github.com/kanshi-dev/agent/actions/workflows/ci.yaml)
+
 This repository contains the **Kanshi Agent**, a small system monitoring agent written in Go.
 
 The agent's primary role is to collect system metrics and ship them to the [Kanshi Core](https://github.com/kanshi-dev/core) service, which handles storage, indexing, and visualization.
