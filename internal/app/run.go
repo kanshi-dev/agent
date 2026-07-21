@@ -57,12 +57,9 @@ func Run(ctx context.Context, cfg config.Config) error {
 			logg.Error("connect failed: %v", err)
 		}
 
-		sleepWithJitter(5 * time.Second)
-
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		default:
+		if !sleepWithJitter(ctx, 5*time.Second) {
+			logg.Info("kanshi-agent shutting down")
+			return nil
 		}
 	}
 
@@ -114,7 +111,18 @@ func sendBatch(
 		return
 	}
 
+	drop := func() {
+		logg.Warn("dropping %d metric points during shutdown", len(payload))
+	}
+
 	for {
+		select {
+		case <-ctx.Done():
+			drop()
+			return
+		default:
+		}
+
 		ctxTimeout, cancel := context.WithTimeout(ctx, 5*time.Second)
 		err := (*sender).Send(ctxTimeout, payload)
 		cancel()
@@ -125,13 +133,23 @@ func sendBatch(
 
 		if transport.IsAuthError(err) {
 			logg.Error("authentication failed while sending batch (check KANSHI_API_KEY): %v", err)
-			sleepWithJitter(10 * time.Second)
+			if !sleepWithJitter(ctx, 10*time.Second) {
+				drop()
+				return
+			}
 			continue
 		}
 
 		logg.Error("send failed: %v", err)
 
 		for {
+			select {
+			case <-ctx.Done():
+				drop()
+				return
+			default:
+			}
+
 			newSender, err := transport.New(cfg.CoreAddr, agentID, cfg.APIKey)
 			if err == nil {
 				*sender = newSender
@@ -139,15 +157,29 @@ func sendBatch(
 			}
 
 			logg.Error("reconnect failed: %v", err)
-			sleepWithJitter(5 * time.Second)
+			if !sleepWithJitter(ctx, 5*time.Second) {
+				drop()
+				return
+			}
 		}
 
 		// retry the same payload (NO DATA LOSS)
-		sleepWithJitter(2 * time.Second)
+		if !sleepWithJitter(ctx, 2*time.Second) {
+			drop()
+			return
+		}
 	}
 }
 
-func sleepWithJitter(base time.Duration) {
+func sleepWithJitter(ctx context.Context, base time.Duration) bool {
 	jitter := time.Duration(rand.Intn(1000)) * time.Millisecond
-	time.Sleep(base + jitter)
+	timer := time.NewTimer(base + jitter)
+	defer timer.Stop()
+
+	select {
+	case <-timer.C:
+		return true
+	case <-ctx.Done():
+		return false
+	}
 }
