@@ -56,4 +56,9 @@ go run cmd/agent/main.go
 - To practice Go project structure
 - To build toward a larger system ([Kanshi Core](https://github.com/kanshi-dev/core))
 
-Future versions may add retries, streaming, and reliability features — but v1 stays intentionally simple.
+Future versions may add retries, streaming, and reliability features, but v1 stays intentionally simple.
+# Quickstart and support
+
+See the [canonical quickstart](https://github.com/kanshi-dev/core/blob/main/QUICKSTART.md) for server and agent installation.
+
+Kanshi follows semantic versioning from `v1.0.0`. Bug fixes ship in `v1.0.x`, features wait for the next minor release, and breaking API changes wait for the next major release. Release notes are generated from merged pull requests. Use GitHub issues for public support and [private vulnerability reporting](SECURITY.md) for security reports. The latest `v1.0.x` release is supported.
