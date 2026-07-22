@@ -1,0 +1,17 @@
+[Unit]
+Description=Kanshi monitoring agent
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=kanshi-agent
+Group=kanshi-agent
+EnvironmentFile=/etc/kanshi-agent.env
+WorkingDirectory=/var/lib/kanshi-agent
+ExecStart=/usr/local/bin/kanshi-agent
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

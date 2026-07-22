@@ -1,4 +1,5 @@
 version: 2
+project_name: kanshi-agent
 
 before:
   hooks:
@@ -11,6 +12,8 @@ builds:
     binary: kanshi-agent
     env:
       - CGO_ENABLED=0
+    ldflags:
+      - -s -w -X github.com/kanshi-dev/agent/internal/app.version={{.Version}}
     goos:
       - linux
       - windows
@@ -43,3 +46,8 @@ changelog:
     exclude:
       - '^docs:'
       - '^test:'
+
+release:
+  extra_files:
+    - glob: install.sh
+    - glob: packaging/kanshi-agent.service

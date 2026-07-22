@@ -13,6 +13,8 @@ import (
 	"github.com/kanshi-dev/agent/internal/transport"
 )
 
+var version = "dev"
+
 func Run(ctx context.Context, cfg config.Config) error {
 	lvl := logger.ParseLevel(cfg.LogLevel)
 	logg := logger.New(lvl)
@@ -32,7 +34,7 @@ func Run(ctx context.Context, cfg config.Config) error {
 
 	// --- CONNECT + REPORT (combined retry) ---
 	var sender transport.Sender
-	info, err := identity.Collect("0.1.0")
+	info, err := identity.Collect(version)
 	if err != nil {
 		return err
 	}
