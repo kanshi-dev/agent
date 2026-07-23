@@ -48,6 +48,7 @@ changelog:
       - '^test:'
 
 release:
+  prerelease: auto
   extra_files:
     - glob: install.sh
     - glob: packaging/kanshi-agent.service
