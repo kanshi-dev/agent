@@ -2,63 +2,64 @@
 
 [![CI](https://github.com/kanshi-dev/agent/actions/workflows/ci.yaml/badge.svg)](https://github.com/kanshi-dev/agent/actions/workflows/ci.yaml)
 
-This repository contains the **Kanshi Agent**, a small system monitoring agent written in Go.
+Kanshi Agent is a small Go service that collects CPU, memory, and disk usage with gopsutil, batches the points in memory, and sends them to Kanshi Core over authenticated gRPC.
 
-The agent's primary role is to collect system metrics and ship them to the [Kanshi Core](https://github.com/kanshi-dev/core) service, which handles storage, indexing, and visualization.
-
----
-
-## What It Does
-
-- Collects system stats using `gopsutil`
-- Batches metrics in memory
-- Flushes by size or time interval
-- Sends data to a gRPC endpoint
-- Stateless, best-effort delivery
-
-Under the hood, it’s essentially a thin wrapper around the excellent [`gopsutil`](https://github.com/shirou/gopsutil) library with a simple batching + transport layer.
-
----
-
-## Architecture (Simple by Design)
-
-collect → batch → send
-
----
-
-## Run
-
-```bash
-go run cmd/agent/main.go
+```text
+collect -> batch -> send -> reconnect and retry when needed
 ```
 
-## Configure via environment variables:
+## Install
+
+The current public test release is `v1.0.0-rc3`:
+
+```sh
+curl -fsSL https://kanshi.dev/install.sh |
+  KANSHI_VERSION=v1.0.0-rc3 sh
+```
+
+Run it with a core address and ingest key:
+
+```sh
+export KANSHI_CORE_ADDR=your-server:50051
+export KANSHI_API_KEY=your-ingest-key
+kanshi-agent
+```
+
+For systemd Linux:
+
+```sh
+curl -fsSL https://kanshi.dev/install.sh |
+  sudo KANSHI_VERSION=v1.0.0-rc3 \
+  KANSHI_CORE_ADDR=your-server:50051 \
+  KANSHI_API_KEY=your-ingest-key \
+  sh -s -- --systemd
+```
+
+## Configuration
+
 | Variable | Default | Description |
-|---|---|---|
-| `KANSHI_CORE_ADDR` | `127.0.0.1:50051` | The gRPC address of the Kanshi core service. |
-| `KANSHI_API_KEY` | (empty) | API key for authentication with the core service. |
-| `KANSHI_INTERVAL` | `5s` | How often the agent collects system metrics. |
-| `KANSHI_BATCH_MAX` | `100` | Maximum number of points to batch before flushing. |
-| `KANSHI_FLUSH_EVERY` | `10s` | Maximum time to wait before flushing regardless of batch size. |
-| `KANSHI_HOST_TAGS` | (empty) | Comma-separated tags for the host (e.g. `env:prod,region:us-west`). |
+| --- | --- | --- |
+| `KANSHI_CORE_ADDR` | `127.0.0.1:50051` | Core gRPC address |
+| `KANSHI_API_KEY` | empty | Shared ingest key required by core |
+| `KANSHI_INTERVAL` | `5s` | Collection cadence |
+| `KANSHI_BATCH_MAX` | `100` | Size-triggered flush threshold |
+| `KANSHI_FLUSH_EVERY` | `10s` | Time-triggered flush |
+| `KANSHI_HOST_TAGS` | empty | Comma-separated host tags |
+| `KANSHI_LOG_LEVEL` | `info` | Log level |
 
-```bash
-# Example
-export KANSHI_CORE_ADDR=localhost:50051
-export KANSHI_INTERVAL=5s
-go run cmd/agent/main.go
+The agent ID persists in `.kanshi-id` in the working directory, or in `/var/lib/kanshi-agent` for the packaged systemd service.
+
+## Develop
+
+```sh
+go run ./cmd/agent
+go test ./...
+go vet ./...
+go build ./...
 ```
 
+See the [canonical quickstart](https://github.com/kanshi-dev/core/blob/main/QUICKSTART.md) for the complete stack.
 
-### Why This Exists?
+## Support and security
 
-- To understand how monitoring agents work internally
-- To practice Go project structure
-- To build toward a larger system ([Kanshi Core](https://github.com/kanshi-dev/core))
-
-Future versions may add retries, streaming, and reliability features, but v1 stays intentionally simple.
-# Quickstart and support
-
-See the [canonical quickstart](https://github.com/kanshi-dev/core/blob/main/QUICKSTART.md) for server and agent installation.
-
-Kanshi follows semantic versioning from `v1.0.0`. Bug fixes ship in `v1.0.x`, features wait for the next minor release, and breaking API changes wait for the next major release. Release notes are generated from merged pull requests. Use GitHub issues for public support and [private vulnerability reporting](SECURITY.md) for security reports. The latest `v1.0.x` release is supported.
+Use GitHub issues for public support. Report vulnerabilities through [private vulnerability reporting](SECURITY.md). Kanshi follows semantic versioning from `v1.0.0`.
