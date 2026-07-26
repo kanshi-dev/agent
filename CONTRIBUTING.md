@@ -1,6 +1,6 @@
 # Contributing to kanshi-agent
 
-Kanshi is built from three repos: [core](https://github.com/kanshi-dev/core), [agent](https://github.com/kanshi-dev/agent), and [dashboard](https://github.com/kanshi-dev/dashboard). Work is planned on the [Kanshi v1.0.0 project board](https://github.com/orgs/kanshi-dev/projects/1); the roadmap and priorities live there. Please pick up (or file) an issue before opening a PR.
+Kanshi is split across the [kanshi-dev repositories](https://github.com/kanshi-dev). Product direction lives in the private engineering handbook; GitHub issues and Projects track execution. Please pick up (or file) an issue before opening a PR.
 
 ## Workflow
 
@@ -13,7 +13,7 @@ Kanshi is built from three repos: [core](https://github.com/kanshi-dev/core), [a
 ## Rules of the repo
 
 - **Bug fixes land with a regression test** that reproduces the bug: it fails before the fix and passes after.
-- The agent runs on other people's servers: every blocking call must respect `context.Context`, and memory use must stay bounded under failure (see the batch buffer policy in `internal/pipeline/`).
+- The agent runs on other people's servers: every blocking call must respect `context.Context`. Collection and sending are synchronous, so the in-memory batch does not grow during an outage.
 - Collectors implement the `collect.Collector` interface and are registered in `internal/registry/registry.go`; metric points carry tags rather than encoding metadata in names.
 - Standard Go `internal/` layout; no global state.
 
@@ -29,4 +29,4 @@ Configuration is via `KANSHI_*` env vars (`KANSHI_CORE_ADDR`, `KANSHI_API_KEY`, 
 
 ## Versioning
 
-Semver from v1.0.0: bug fixes ship as `v1.0.x` patches, features wait for `v1.1.0`.
+Semver from v1.0.0: bug fixes ship as patch releases and features as minor releases. No breaking API changes land within a major version.
