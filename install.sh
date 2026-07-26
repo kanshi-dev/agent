@@ -3,8 +3,12 @@ set -eu
 
 version=${KANSHI_VERSION:-v1.0.0}
 prefix=${PREFIX:-/usr/local}
-systemd=false
-[ "${1:-}" = "--systemd" ] && systemd=true
+service=false
+# --service installs a boot-time service using the platform's init system
+# (systemd on Linux, launchd on macOS). --systemd is kept as an alias.
+case "${1:-}" in
+  --service | --systemd) service=true ;;
+esac
 
 case $(uname -s) in
   Linux) os=linux ;;
@@ -59,20 +63,70 @@ else
   $sudo install -m 0755 "$tmp/kanshi-agent" "$prefix/bin/kanshi-agent"
 fi
 
-if "$systemd"; then
-  [ "$os" = linux ] || { echo "--systemd is supported only on Linux" >&2; exit 1; }
-  : "${KANSHI_CORE_ADDR:?KANSHI_CORE_ADDR is required with --systemd}"
-  : "${KANSHI_API_KEY:?KANSHI_API_KEY is required with --systemd}"
-  command -v systemctl >/dev/null 2>&1 || { echo "systemd is not available" >&2; exit 1; }
+if "$service"; then
+  case "$os" in
+    linux | darwin) ;;
+    *) echo "--service is not supported on $os" >&2; exit 1 ;;
+  esac
+
+  # Ask for required config when it is not supplied via the environment.
+  if [ -z "${KANSHI_CORE_ADDR:-}" ]; then
+    [ -r /dev/tty ] || { echo "set KANSHI_CORE_ADDR (no terminal to prompt)" >&2; exit 1; }
+    printf 'Core address (host:50051): ' > /dev/tty
+    read -r KANSHI_CORE_ADDR < /dev/tty
+  fi
+  if [ -z "${KANSHI_API_KEY:-}" ]; then
+    [ -r /dev/tty ] || { echo "set KANSHI_API_KEY (no terminal to prompt)" >&2; exit 1; }
+    printf 'Ingest API key (KANSHI_API_KEY from your core .env): ' > /dev/tty
+    stty -echo < /dev/tty 2>/dev/null || true
+    read -r KANSHI_API_KEY < /dev/tty
+    stty echo < /dev/tty 2>/dev/null || true
+    printf '\n' > /dev/tty
+  fi
+  [ -n "$KANSHI_CORE_ADDR" ] || { echo "core address is required" >&2; exit 1; }
+  [ -n "$KANSHI_API_KEY" ] || { echo "API key is required" >&2; exit 1; }
+
   need_root
-  curl -fsSL "$base/kanshi-agent.service" -o "$tmp/kanshi-agent.service"
-  id kanshi-agent >/dev/null 2>&1 || $sudo useradd --system --home-dir /var/lib/kanshi-agent --shell /usr/sbin/nologin kanshi-agent
-  $sudo install -d -o kanshi-agent -g kanshi-agent /var/lib/kanshi-agent
-  printf 'KANSHI_CORE_ADDR=%s\nKANSHI_API_KEY=%s\n' "$KANSHI_CORE_ADDR" "$KANSHI_API_KEY" | $sudo tee /etc/kanshi-agent.env >/dev/null
-  $sudo chmod 0600 /etc/kanshi-agent.env
-  sed "s#/usr/local/bin/kanshi-agent#$prefix/bin/kanshi-agent#" "$tmp/kanshi-agent.service" | $sudo tee /etc/systemd/system/kanshi-agent.service >/dev/null
-  $sudo systemctl daemon-reload
-  $sudo systemctl enable --now kanshi-agent
+
+  if [ "$os" = linux ]; then
+    command -v systemctl >/dev/null 2>&1 || { echo "systemd is not available" >&2; exit 1; }
+    curl -fsSL "$base/kanshi-agent.service" -o "$tmp/kanshi-agent.service"
+    id kanshi-agent >/dev/null 2>&1 || $sudo useradd --system --home-dir /var/lib/kanshi-agent --shell /usr/sbin/nologin kanshi-agent
+    $sudo install -d -o kanshi-agent -g kanshi-agent /var/lib/kanshi-agent
+    printf 'KANSHI_CORE_ADDR=%s\nKANSHI_API_KEY=%s\n' "$KANSHI_CORE_ADDR" "$KANSHI_API_KEY" | $sudo tee /etc/kanshi-agent.env >/dev/null
+    $sudo chmod 0600 /etc/kanshi-agent.env
+    sed "s#/usr/local/bin/kanshi-agent#$prefix/bin/kanshi-agent#" "$tmp/kanshi-agent.service" | $sudo tee /etc/systemd/system/kanshi-agent.service >/dev/null
+    $sudo systemctl daemon-reload
+    $sudo systemctl enable --now kanshi-agent
+    echo "installed and started kanshi-agent $version as a systemd service"
+  else
+    # macOS: run at boot via a launchd daemon. The plist is written inline so no
+    # extra release asset is needed. Keys are hex tokens, so no XML escaping.
+    plist=/Library/LaunchDaemons/dev.kanshi.agent.plist
+    printf '%s\n' \
+      '<?xml version="1.0" encoding="UTF-8"?>' \
+      '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">' \
+      '<plist version="1.0"><dict>' \
+      '  <key>Label</key><string>dev.kanshi.agent</string>' \
+      '  <key>ProgramArguments</key><array>' \
+      "    <string>$prefix/bin/kanshi-agent</string>" \
+      '  </array>' \
+      '  <key>EnvironmentVariables</key><dict>' \
+      "    <key>KANSHI_CORE_ADDR</key><string>$KANSHI_CORE_ADDR</string>" \
+      "    <key>KANSHI_API_KEY</key><string>$KANSHI_API_KEY</string>" \
+      '  </dict>' \
+      '  <key>RunAtLoad</key><true/>' \
+      '  <key>KeepAlive</key><true/>' \
+      '  <key>StandardOutPath</key><string>/var/log/kanshi-agent.log</string>' \
+      '  <key>StandardErrorPath</key><string>/var/log/kanshi-agent.log</string>' \
+      '</dict></plist>' \
+      | $sudo tee "$plist" >/dev/null
+    $sudo chown root:wheel "$plist"
+    $sudo chmod 0600 "$plist"
+    $sudo launchctl bootout system "$plist" 2>/dev/null || true
+    $sudo launchctl bootstrap system "$plist"
+    echo "installed and started kanshi-agent $version as a launchd service"
+  fi
 fi
 
 echo "installed kanshi-agent $version to $prefix/bin/kanshi-agent"
