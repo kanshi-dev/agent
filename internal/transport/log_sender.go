@@ -2,12 +2,18 @@ package transport
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
+	"fmt"
+	"os"
 
 	"github.com/kanshi-dev/agent/internal/collect"
+	"github.com/kanshi-dev/agent/internal/config"
 	"github.com/kanshi-dev/agent/internal/identity"
 	ingest "github.com/kanshi-dev/agent/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
@@ -21,17 +27,39 @@ type LogSender struct {
 }
 
 // New creates a new gRPC-based Sender.
-func New(coreAddr, agendID, apiKey string) (*LogSender, error) {
-	conn, err := grpc.NewClient(coreAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+func New(cfg config.Config, agentID string) (*LogSender, error) {
+	transportCredentials := credentials.TransportCredentials(insecure.NewCredentials())
+	if cfg.TLS {
+		tlsConfig := &tls.Config{
+			MinVersion: tls.VersionTLS12,
+			ServerName: cfg.TLSServerName,
+		}
+		if cfg.TLSCAFile != "" {
+			roots, err := x509.SystemCertPool()
+			if err != nil {
+				return nil, fmt.Errorf("load system CA pool: %w", err)
+			}
+			pem, err := os.ReadFile(cfg.TLSCAFile)
+			if err != nil {
+				return nil, fmt.Errorf("read KANSHI_TLS_CA_FILE: %w", err)
+			}
+			if !roots.AppendCertsFromPEM(pem) {
+				return nil, fmt.Errorf("KANSHI_TLS_CA_FILE contains no valid certificates")
+			}
+			tlsConfig.RootCAs = roots
+		}
+		transportCredentials = credentials.NewTLS(tlsConfig)
+	}
 
+	conn, err := grpc.NewClient(cfg.CoreAddr, grpc.WithTransportCredentials(transportCredentials))
 	if err != nil {
 		return nil, err
 	}
 
 	return &LogSender{
 		client:  ingest.NewIngestServiceClient(conn),
-		agentID: agendID,
-		apiKey:  apiKey,
+		agentID: agentID,
+		apiKey:  cfg.APIKey,
 	}, nil
 }
 

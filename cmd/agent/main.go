@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -13,12 +14,16 @@ import (
 func main() {
 
 	cfg := config.DefaultConfig()
-	config.LoadFromEnv(&cfg)
+	if err := config.LoadFromEnv(&cfg); err != nil {
+		log.Printf("invalid configuration: %v", err)
+		os.Exit(1)
+	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
 	if err := app.Run(ctx, cfg); err != nil {
+		log.Printf("kanshi-agent failed: %v", err)
 		os.Exit(1)
 	}
 }

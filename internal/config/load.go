@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"strconv"
 	"strings"
@@ -8,13 +9,28 @@ import (
 )
 
 // LoadFromEnv populates the Config from environment variables, using KANSHI_ prefix.
-func LoadFromEnv(c *Config) {
+func LoadFromEnv(c *Config) error {
 	if v := os.Getenv("KANSHI_CORE_ADDR"); v != "" {
 		c.CoreAddr = v
 	}
 
 	if v := os.Getenv("KANSHI_API_KEY"); v != "" {
 		c.APIKey = v
+	}
+
+	if v := os.Getenv("KANSHI_TLS"); v != "" {
+		enabled, err := strconv.ParseBool(v)
+		if err != nil {
+			return fmt.Errorf("KANSHI_TLS must be true or false: %w", err)
+		}
+		c.TLS = enabled
+	}
+
+	if v := os.Getenv("KANSHI_TLS_CA_FILE"); v != "" {
+		c.TLSCAFile = v
+	}
+	if v := os.Getenv("KANSHI_TLS_SERVER_NAME"); v != "" {
+		c.TLSServerName = v
 	}
 
 	if v := os.Getenv("KANSHI_LOG_LEVEL"); v != "" {
@@ -43,4 +59,5 @@ func LoadFromEnv(c *Config) {
 		c.HostTags = strings.Split(v, ",")
 	}
 
+	return c.Validate()
 }

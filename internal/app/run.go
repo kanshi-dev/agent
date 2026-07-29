@@ -16,6 +16,10 @@ import (
 var version = "dev"
 
 func Run(ctx context.Context, cfg config.Config) error {
+	if err := cfg.Validate(); err != nil {
+		return err
+	}
+
 	lvl := logger.ParseLevel(cfg.LogLevel)
 	logg := logger.New(lvl)
 
@@ -40,7 +44,7 @@ func Run(ctx context.Context, cfg config.Config) error {
 	}
 
 	for {
-		sender, err = transport.New(cfg.CoreAddr, agentID, cfg.APIKey)
+		sender, err = transport.New(cfg, agentID)
 		if err == nil {
 			ctxTimeout, cancel := context.WithTimeout(ctx, 5*time.Second)
 			err = sender.ReportAgent(ctxTimeout, info)
@@ -152,7 +156,7 @@ func sendBatch(
 			default:
 			}
 
-			newSender, err := transport.New(cfg.CoreAddr, agentID, cfg.APIKey)
+			newSender, err := transport.New(cfg, agentID)
 			if err == nil {
 				*sender = newSender
 				break

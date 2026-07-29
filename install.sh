@@ -93,7 +93,9 @@ if "$service"; then
     curl -fsSL "$base/kanshi-agent.service" -o "$tmp/kanshi-agent.service"
     id kanshi-agent >/dev/null 2>&1 || $sudo useradd --system --home-dir /var/lib/kanshi-agent --shell /usr/sbin/nologin kanshi-agent
     $sudo install -d -o kanshi-agent -g kanshi-agent /var/lib/kanshi-agent
-    printf 'KANSHI_CORE_ADDR=%s\nKANSHI_API_KEY=%s\n' "$KANSHI_CORE_ADDR" "$KANSHI_API_KEY" | $sudo tee /etc/kanshi-agent.env >/dev/null
+    printf 'KANSHI_CORE_ADDR=%s\nKANSHI_API_KEY=%s\nKANSHI_TLS=%s\nKANSHI_TLS_CA_FILE=%s\nKANSHI_TLS_SERVER_NAME=%s\n' \
+      "$KANSHI_CORE_ADDR" "$KANSHI_API_KEY" "${KANSHI_TLS:-}" "${KANSHI_TLS_CA_FILE:-}" "${KANSHI_TLS_SERVER_NAME:-}" \
+      | $sudo tee /etc/kanshi-agent.env >/dev/null
     $sudo chmod 0600 /etc/kanshi-agent.env
     sed "s#/usr/local/bin/kanshi-agent#$prefix/bin/kanshi-agent#" "$tmp/kanshi-agent.service" | $sudo tee /etc/systemd/system/kanshi-agent.service >/dev/null
     $sudo systemctl daemon-reload
@@ -114,6 +116,9 @@ if "$service"; then
       '  <key>EnvironmentVariables</key><dict>' \
       "    <key>KANSHI_CORE_ADDR</key><string>$KANSHI_CORE_ADDR</string>" \
       "    <key>KANSHI_API_KEY</key><string>$KANSHI_API_KEY</string>" \
+      "    <key>KANSHI_TLS</key><string>${KANSHI_TLS:-}</string>" \
+      "    <key>KANSHI_TLS_CA_FILE</key><string>${KANSHI_TLS_CA_FILE:-}</string>" \
+      "    <key>KANSHI_TLS_SERVER_NAME</key><string>${KANSHI_TLS_SERVER_NAME:-}</string>" \
       '  </dict>' \
       '  <key>RunAtLoad</key><true/>' \
       '  <key>KeepAlive</key><true/>' \

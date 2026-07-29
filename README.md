@@ -41,11 +41,22 @@ curl -fsSL https://kanshi.dev/install.sh |
 | --- | --- | --- |
 | `KANSHI_CORE_ADDR` | `127.0.0.1:50051` | Core gRPC address |
 | `KANSHI_API_KEY` | empty | Shared ingest key required by core |
+| `KANSHI_TLS` | `false` | Use TLS with system certificate roots |
+| `KANSHI_TLS_CA_FILE` | empty | Optional PEM CA file added to the system roots; requires TLS |
+| `KANSHI_TLS_SERVER_NAME` | empty | Optional TLS server-name override; requires TLS |
 | `KANSHI_INTERVAL` | `5s` | Collection cadence |
 | `KANSHI_BATCH_MAX` | `100` | Size-triggered flush threshold |
 | `KANSHI_FLUSH_EVERY` | `10s` | Time-triggered flush |
 | `KANSHI_HOST_TAGS` | empty | Comma-separated host tags |
 | `KANSHI_LOG_LEVEL` | `info` | Log level |
+
+Plaintext remains the default for private-network deployments. To connect securely with the system roots:
+
+```sh
+KANSHI_TLS=true KANSHI_CORE_ADDR=core.example.com:50051 kanshi-agent
+```
+
+Set `KANSHI_TLS_CA_FILE` for a private CA and `KANSHI_TLS_SERVER_NAME` when the certificate name differs from the Core address. The installer passes all three settings into systemd or launchd when `--service` is used.
 
 The agent ID persists in `.kanshi-id` in the working directory, or in `/var/lib/kanshi-agent` for the packaged systemd service.
 

@@ -1,6 +1,9 @@
 package config
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 // Config represents the agent's configuration parameters.
 type Config struct {
@@ -8,6 +11,12 @@ type Config struct {
 	CoreAddr string
 	// APIKey is used for authentication with the core service.
 	APIKey string
+	// TLS enables TLS for the connection to Core.
+	TLS bool
+	// TLSCAFile optionally adds a PEM-encoded CA certificate.
+	TLSCAFile string
+	// TLSServerName optionally overrides the server name verified by TLS.
+	TLSServerName string
 	// LogLevel is the logging level (e.g., "info", "debug").
 	LogLevel string
 	// Interval defines how often the agent collects system metrics.
@@ -18,6 +27,17 @@ type Config struct {
 	FlushEvery time.Duration
 	// HostTags are optional tags appended to all metrics collected by this host.
 	HostTags []string
+}
+
+// Validate rejects configuration combinations that cannot be used safely.
+func (c Config) Validate() error {
+	if !c.TLS && c.TLSCAFile != "" {
+		return fmt.Errorf("KANSHI_TLS_CA_FILE requires KANSHI_TLS=true")
+	}
+	if !c.TLS && c.TLSServerName != "" {
+		return fmt.Errorf("KANSHI_TLS_SERVER_NAME requires KANSHI_TLS=true")
+	}
+	return nil
 }
 
 // DefaultConfig returns a Config with sensible default values.
