@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/kanshi-dev/agent/actions/workflows/ci.yaml/badge.svg)](https://github.com/kanshi-dev/agent/actions/workflows/ci.yaml)
 
-Kanshi Agent is a small Go service that collects CPU, memory, and disk usage with gopsutil, batches the points in memory, and sends them to Kanshi Core over authenticated gRPC.
+Kanshi Agent is a small Go service that collects CPU, memory, disk, and aggregate network rates with gopsutil, batches the points in memory, and sends them to Kanshi Core over authenticated gRPC.
 
 ```text
 collect -> batch -> send -> reconnect and retry when needed

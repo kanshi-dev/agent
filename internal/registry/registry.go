@@ -11,5 +11,6 @@ func Enabled() []collect.Collector {
 		system.CPUCollector{},
 		system.MemCollector{},
 		system.DiskCollector{},
+		&system.NetCollector{},
 	}
 }
