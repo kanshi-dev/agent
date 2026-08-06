@@ -27,6 +27,10 @@ type Config struct {
 	FlushEvery time.Duration
 	// HostTags are optional tags appended to all metrics collected by this host.
 	HostTags []string
+	// ProcessMetrics enables process count, CPU, and resident-memory metrics.
+	ProcessMetrics bool
+	// ProcessTopN limits the independent CPU and resident-memory rankings.
+	ProcessTopN int
 }
 
 // Validate rejects configuration combinations that cannot be used safely.
@@ -37,18 +41,22 @@ func (c Config) Validate() error {
 	if !c.TLS && c.TLSServerName != "" {
 		return fmt.Errorf("KANSHI_TLS_SERVER_NAME requires KANSHI_TLS=true")
 	}
+	if c.ProcessTopN < 1 || c.ProcessTopN > 20 {
+		return fmt.Errorf("KANSHI_PROCESS_TOP_N must be between 1 and 20")
+	}
 	return nil
 }
 
 // DefaultConfig returns a Config with sensible default values.
 func DefaultConfig() Config {
 	return Config{
-		CoreAddr:   "127.0.0.1:50051",
-		APIKey:     "",
-		LogLevel:   "info",
-		Interval:   5 * time.Second,
-		BatchMax:   100,
-		FlushEvery: 10 * time.Second,
-		HostTags:   []string{},
+		CoreAddr:    "127.0.0.1:50051",
+		APIKey:      "",
+		LogLevel:    "info",
+		Interval:    5 * time.Second,
+		BatchMax:    100,
+		FlushEvery:  10 * time.Second,
+		HostTags:    []string{},
+		ProcessTopN: 10,
 	}
 }

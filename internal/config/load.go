@@ -59,5 +59,21 @@ func LoadFromEnv(c *Config) error {
 		c.HostTags = strings.Split(v, ",")
 	}
 
+	if v := os.Getenv("KANSHI_PROCESS_METRICS"); v != "" {
+		enabled, err := strconv.ParseBool(v)
+		if err != nil {
+			return fmt.Errorf("KANSHI_PROCESS_METRICS must be true or false: %w", err)
+		}
+		c.ProcessMetrics = enabled
+	}
+
+	if v := os.Getenv("KANSHI_PROCESS_TOP_N"); v != "" {
+		n, err := strconv.Atoi(v)
+		if err != nil {
+			return fmt.Errorf("KANSHI_PROCESS_TOP_N must be an integer: %w", err)
+		}
+		c.ProcessTopN = n
+	}
+
 	return c.Validate()
 }
