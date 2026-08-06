@@ -27,7 +27,7 @@ func Run(ctx context.Context, cfg config.Config) error {
 		cfg.CoreAddr, cfg.Interval, cfg.BatchMax, cfg.FlushEvery, len(cfg.HostTags),
 	)
 
-	collectors := registry.Enabled()
+	collectors := registry.Enabled(cfg)
 	batch := &pipeline.Batch{}
 
 	//Generate agent ID

@@ -2,6 +2,30 @@ package config
 
 import "testing"
 
+func TestProcessMetricConfig(t *testing.T) {
+	cfg := DefaultConfig()
+	if cfg.ProcessMetrics || cfg.ProcessTopN != 10 {
+		t.Fatalf("defaults = enabled %v, top N %d; want false, 10", cfg.ProcessMetrics, cfg.ProcessTopN)
+	}
+
+	for _, value := range []string{"0", "21", "nope"} {
+		t.Run(value, func(t *testing.T) {
+			t.Setenv("KANSHI_PROCESS_TOP_N", value)
+			cfg := DefaultConfig()
+			if err := LoadFromEnv(&cfg); err == nil {
+				t.Fatal("expected invalid process top N to fail")
+			}
+		})
+	}
+
+	t.Setenv("KANSHI_PROCESS_METRICS", "true")
+	t.Setenv("KANSHI_PROCESS_TOP_N", "20")
+	cfg = DefaultConfig()
+	if err := LoadFromEnv(&cfg); err != nil || !cfg.ProcessMetrics || cfg.ProcessTopN != 20 {
+		t.Fatalf("process config = %+v, %v", cfg, err)
+	}
+}
+
 func TestLoadFromEnvValidatesTLS(t *testing.T) {
 	tests := []struct {
 		name       string

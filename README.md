@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/kanshi-dev/agent/actions/workflows/ci.yaml/badge.svg)](https://github.com/kanshi-dev/agent/actions/workflows/ci.yaml)
 
-Kanshi Agent is a small Go service that collects CPU, memory, disk, and aggregate network rates with gopsutil, batches the points in memory, and sends them to Kanshi Core over authenticated gRPC.
+Kanshi Agent is a small Go service that collects CPU, memory, disk, aggregate network rates, and optional process metrics with gopsutil, batches the points in memory, and sends them to Kanshi Core over authenticated gRPC.
 
 ```text
 collect -> batch -> send -> reconnect and retry when needed
@@ -49,6 +49,8 @@ curl -fsSL https://kanshi.dev/install.sh |
 | `KANSHI_FLUSH_EVERY` | `10s` | Time-triggered flush |
 | `KANSHI_HOST_TAGS` | empty | Comma-separated host tags |
 | `KANSHI_LOG_LEVEL` | `info` | Log level |
+| `KANSHI_PROCESS_METRICS` | `false` | Collect process count, CPU, and resident memory |
+| `KANSHI_PROCESS_TOP_N` | `10` | Independent CPU and memory ranking size, from 1 through 20 |
 
 Plaintext remains the default for private-network deployments. To connect securely with the system roots:
 
@@ -59,6 +61,8 @@ KANSHI_TLS=true KANSHI_CORE_ADDR=core.example.com:50051 kanshi-agent
 Set `KANSHI_TLS_CA_FILE` for a private CA and `KANSHI_TLS_SERVER_NAME` when the certificate name differs from the Core address. The installer passes all three settings into systemd or launchd when `--service` is used.
 
 The agent ID persists in `.kanshi-id` in the working directory, or in `/var/lib/kanshi-agent` for the packaged systemd service.
+
+Process telemetry is disabled by default. Enable it with `KANSHI_PROCESS_METRICS=true`. The agent emits `process.count` plus the union of the top CPU and resident-memory rankings, tagged with PID and normalized process name. It never reads process arguments, executable paths, or environment data. The first observation can report resident memory while CPU remains unavailable until the next collection interval.
 
 ## Develop
 
