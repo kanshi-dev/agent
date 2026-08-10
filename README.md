@@ -58,7 +58,7 @@ Plaintext remains the default for private-network deployments. To connect secure
 KANSHI_TLS=true KANSHI_CORE_ADDR=core.example.com:50051 kanshi-agent
 ```
 
-Set `KANSHI_TLS_CA_FILE` for a private CA and `KANSHI_TLS_SERVER_NAME` when the certificate name differs from the Core address. The installer passes all three settings into systemd or launchd when `--service` is used.
+Set `KANSHI_TLS_CA_FILE` for a private CA and `KANSHI_TLS_SERVER_NAME` when the certificate name differs from the Core address. The installer passes the TLS and process metric settings into systemd or launchd when `--service` is used.
 
 The agent ID persists in `.kanshi-id` in the working directory, or in `/var/lib/kanshi-agent` for the packaged systemd service.
 
