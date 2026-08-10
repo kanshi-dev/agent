@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-version=${KANSHI_VERSION:-v1.0.0}
+version=${KANSHI_VERSION:-v1.3.0}
 prefix=${PREFIX:-/usr/local}
 service=false
 # --service installs a boot-time service using the platform's init system
