@@ -79,8 +79,11 @@ func (c *ProcessCollector) Collect(ctx context.Context) ([]collect.Point, error)
 		}
 		return samples[j].cpu == nil || *samples[i].cpu > *samples[j].cpu
 	})
-	for i := 0; i < len(samples) && i < c.topN && samples[i].cpu != nil; i++ {
-		selected[samples[i].key] = samples[i]
+	for _, sample := range samples[:min(len(samples), c.topN)] {
+		if sample.cpu == nil {
+			break
+		}
+		selected[sample.key] = sample
 	}
 	sort.Slice(samples, func(i, j int) bool {
 		if samples[i].rss == nil {
@@ -88,8 +91,11 @@ func (c *ProcessCollector) Collect(ctx context.Context) ([]collect.Point, error)
 		}
 		return samples[j].rss == nil || *samples[i].rss > *samples[j].rss
 	})
-	for i := 0; i < len(samples) && i < c.topN && samples[i].rss != nil; i++ {
-		selected[samples[i].key] = samples[i]
+	for _, sample := range samples[:min(len(samples), c.topN)] {
+		if sample.rss == nil {
+			break
+		}
+		selected[sample.key] = sample
 	}
 
 	points := []collect.Point{{Name: "process.count", Value: float64(count), Timestamp: at}}

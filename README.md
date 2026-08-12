@@ -10,11 +10,11 @@ collect -> batch -> send -> reconnect and retry when needed
 
 ## Install
 
-The current stable release is `v1.3.0`:
+The current stable release is `v1.3.1`:
 
 ```sh
 curl -fsSL https://kanshi.dev/install.sh |
-  KANSHI_VERSION=v1.3.0 sh
+  KANSHI_VERSION=v1.3.1 sh
 ```
 
 Run it with a core address and ingest key:
@@ -29,7 +29,7 @@ For systemd Linux:
 
 ```sh
 curl -fsSL https://kanshi.dev/install.sh |
-  sudo KANSHI_VERSION=v1.3.0 \
+  sudo KANSHI_VERSION=v1.3.1 \
   KANSHI_CORE_ADDR=your-server:50051 \
   KANSHI_API_KEY=your-ingest-key \
   sh -s -- --systemd
