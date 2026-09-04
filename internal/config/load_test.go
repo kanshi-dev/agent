@@ -59,3 +59,44 @@ func TestLoadFromEnvValidatesTLS(t *testing.T) {
 		}
 	})
 }
+
+func TestPprofTargetConfig(t *testing.T) {
+	t.Setenv("KANSHI_PPROF_TARGETS", "checkout=http://127.0.0.1:6060,secure=https://go.internal:7443")
+	t.Setenv("KANSHI_PPROF_DISCOVERY", "worker=http://localhost:6059-6061")
+	cfg := DefaultConfig()
+	if err := LoadFromEnv(&cfg); err != nil {
+		t.Fatal(err)
+	}
+	if len(cfg.PprofTargets) != 2 || cfg.PprofTargets[0].URL != "http://127.0.0.1:6060" {
+		t.Fatalf("targets = %+v", cfg.PprofTargets)
+	}
+	if len(cfg.PprofDiscovery) != 1 || cfg.PprofDiscovery[0].StartPort != 6059 || cfg.PprofDiscovery[0].EndPort != 6061 {
+		t.Fatalf("discovery = %+v", cfg.PprofDiscovery)
+	}
+	if got := cfg.ProfileTargets(); len(got) != 3 || got[2].Name != "worker" || !got[2].Discovered {
+		t.Fatalf("metadata = %+v", got)
+	}
+}
+
+func TestPprofTargetConfigRejectsUnsafeInput(t *testing.T) {
+	tests := map[string]struct{ targets, discovery string }{
+		"credentials":   {targets: "bad=http://user:pass@localhost:6060"},
+		"query":         {targets: "bad=http://localhost:6060?x=1"},
+		"path":          {targets: "bad=http://localhost:6060/debug/pprof"},
+		"scheme":        {targets: "bad=file://localhost:6060"},
+		"duplicate":     {targets: "same=http://localhost:6060", discovery: "same=http://localhost:6061-6062"},
+		"wide range":    {discovery: "bad=http://localhost:6000-6008"},
+		"reverse range": {discovery: "bad=http://localhost:6061-6059"},
+		"invalid name":  {targets: "bad name=http://localhost:6060"},
+	}
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Setenv("KANSHI_PPROF_TARGETS", tt.targets)
+			t.Setenv("KANSHI_PPROF_DISCOVERY", tt.discovery)
+			cfg := DefaultConfig()
+			if err := LoadFromEnv(&cfg); err == nil {
+				t.Fatal("expected invalid configuration")
+			}
+		})
+	}
+}
