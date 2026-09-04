@@ -11,17 +11,21 @@ import (
 	"github.com/kanshi-dev/agent/internal/logger"
 	"github.com/kanshi-dev/agent/internal/pipeline"
 	"github.com/kanshi-dev/agent/internal/transport"
+	ingest "github.com/kanshi-dev/agent/proto"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
 type authFailSender struct{}
 
-func (authFailSender) Send(context.Context, []collect.Point) error {
-	return status.Error(codes.Unauthenticated, "no")
+func (authFailSender) Send(context.Context, []collect.Point) (*ingest.ProfileCommand, error) {
+	return nil, status.Error(codes.Unauthenticated, "no")
 }
 
-func (authFailSender) ReportAgent(context.Context, *identity.SystemInfo) error { return nil }
+func (authFailSender) ReportAgent(context.Context, *identity.SystemInfo) (*ingest.ProfileCommand, error) {
+	return nil, nil
+}
+func (authFailSender) UploadProfile(context.Context, *ingest.ProfileUpload) error { return nil }
 
 func TestSendBatchStopsDuringRetry(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
@@ -31,7 +35,7 @@ func TestSendBatchStopsDuringRetry(t *testing.T) {
 
 	done := make(chan struct{})
 	go func() {
-		sendBatch(ctx, batch, &sender, config.DefaultConfig(), "agent", logger.New(logger.ERROR))
+		sendBatch(ctx, batch, &sender, config.DefaultConfig(), "agent", logger.New(logger.ERROR), nil)
 		close(done)
 	}()
 

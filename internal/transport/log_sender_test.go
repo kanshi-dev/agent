@@ -74,13 +74,13 @@ func TestConnectionsAndCancellation(t *testing.T) {
 
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 			defer cancel()
-			if err := sender.ReportAgent(ctx, &identity.SystemInfo{}); err != nil {
+			if _, err := sender.ReportAgent(ctx, &identity.SystemInfo{}); err != nil {
 				t.Fatalf("connect: %v", err)
 			}
 
 			cancelled, stop := context.WithCancel(context.Background())
 			stop()
-			if err := sender.ReportAgent(cancelled, &identity.SystemInfo{}); status.Code(err) != codes.Canceled {
+			if _, err := sender.ReportAgent(cancelled, &identity.SystemInfo{}); status.Code(err) != codes.Canceled {
 				t.Fatalf("expected cancellation, got %v", err)
 			}
 		})
