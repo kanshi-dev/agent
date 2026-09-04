@@ -42,15 +42,18 @@ func Run(ctx context.Context, cfg config.Config) error {
 	if err != nil {
 		return err
 	}
+	profileWorker := newProfileWorker(ctx, cfg, agentID, logg)
 
 	for {
 		sender, err = transport.New(cfg, agentID)
 		if err == nil {
 			ctxTimeout, cancel := context.WithTimeout(ctx, 5*time.Second)
-			err = sender.ReportAgent(ctxTimeout, info)
+			command, reportErr := sender.ReportAgent(ctxTimeout, info)
+			err = reportErr
 			cancel()
 
 			if err == nil {
+				profileWorker.Submit(command)
 				break
 			}
 
@@ -78,12 +81,12 @@ func Run(ctx context.Context, cfg config.Config) error {
 		select {
 
 		case <-ctx.Done():
-			sendBatch(ctx, batch, &sender, cfg, agentID, logg)
+			sendBatch(ctx, batch, &sender, cfg, agentID, logg, profileWorker)
 			logg.Info("kanshi-agent shutting down")
 			return nil
 
 		case <-flushTicker.C:
-			sendBatch(ctx, batch, &sender, cfg, agentID, logg)
+			sendBatch(ctx, batch, &sender, cfg, agentID, logg, profileWorker)
 
 		case <-ticker.C:
 			for _, c := range collectors {
@@ -96,7 +99,7 @@ func Run(ctx context.Context, cfg config.Config) error {
 				batch.Add(points)
 
 				if batch.Len() >= cfg.BatchMax {
-					sendBatch(ctx, batch, &sender, cfg, agentID, logg)
+					sendBatch(ctx, batch, &sender, cfg, agentID, logg, profileWorker)
 				}
 			}
 		}
@@ -110,6 +113,7 @@ func sendBatch(
 	cfg config.Config,
 	agentID string,
 	logg *logger.StdLogger,
+	profileWorker *profileWorker,
 ) {
 	payload := batch.Flush()
 
@@ -130,10 +134,13 @@ func sendBatch(
 		}
 
 		ctxTimeout, cancel := context.WithTimeout(ctx, 5*time.Second)
-		err := (*sender).Send(ctxTimeout, payload)
+		command, err := (*sender).Send(ctxTimeout, payload)
 		cancel()
 
 		if err == nil {
+			if profileWorker != nil {
+				profileWorker.Submit(command)
+			}
 			return
 		}
 
